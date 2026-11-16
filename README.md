@@ -87,3 +87,7 @@ weather, Claude plan quota (no local source for it).
 ## Icon
 
 `swift scripts/make-icon.swift` redraws `Resources/AppIcon.icns` from code (dark squircle, notch, frosted panel, teal waveform).
+
+## License
+
+MIT. See [LICENSE](LICENSE).
