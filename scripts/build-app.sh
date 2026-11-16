@@ -11,6 +11,7 @@ rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 cp "$BIN" "$APP/Contents/MacOS/NotchBoard"
 cp Resources/Info.plist "$APP/Contents/Info.plist"
+cp Resources/AppIcon.icns "$APP/Contents/Resources/AppIcon.icns"
 
 # Ad-hoc signature. macOS ties privacy grants to the signature, so after a
 # rebuild it may ask for Calendar, Reminders and Music access again.
@@ -19,9 +20,10 @@ codesign --verify "$APP"
 echo "Built $APP"
 
 if [[ "${1:-}" == "--install" ]]; then
-    mkdir -p "$HOME/Applications"
     pkill -x NotchBoard 2>/dev/null || true
-    rm -rf "$HOME/Applications/NotchBoard.app"
-    cp -R "$APP" "$HOME/Applications/"
-    echo "Installed to ~/Applications/NotchBoard.app"
+    rm -rf "/Applications/NotchBoard.app"
+    cp -R "$APP" "/Applications/"
+    # Re-register so Finder and Launchpad pick up the new icon.
+    /System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister -f "/Applications/NotchBoard.app"
+    echo "Installed to /Applications/NotchBoard.app"
 fi

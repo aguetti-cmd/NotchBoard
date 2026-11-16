@@ -7,8 +7,8 @@ not reused.
 ## Run it
 
 ```bash
-./scripts/build-app.sh --install     # builds, signs ad hoc, copies to ~/Applications
-open ~/Applications/NotchBoard.app
+./scripts/build-app.sh --install     # builds, signs ad hoc, copies to /Applications
+open /Applications/NotchBoard.app
 ```
 
 Hover the notch to open the panel. Move away and it closes. The pin button in
@@ -83,3 +83,7 @@ scripts/build-app.sh      release build into build/NotchBoard.app
 
 Spotify and browser media, clipboard history, global hotkey, location-based
 weather, Claude plan quota (no local source for it).
+
+## Icon
+
+`swift scripts/make-icon.swift` redraws `Resources/AppIcon.icns` from code (dark squircle, notch, frosted panel, teal waveform).
