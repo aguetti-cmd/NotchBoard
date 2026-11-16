@@ -120,6 +120,23 @@ import Testing
     }
 }
 
+@Suite struct AgendaTests {
+    @Test func mergesSameEventFromTwoCalendars() {
+        let t0 = Date(timeIntervalSince1970: 1_000_000)
+        let t1 = t0.addingTimeInterval(3600)
+        struct E { let cal: String; let title: String; let start: Date; let end: Date }
+        let events = [
+            E(cal: "work", title: "Work hours", start: t0, end: t1),
+            E(cal: "icloud", title: " work hours ", start: t0, end: t1),   // duplicate
+            E(cal: "icloud", title: "Work hours", start: t0, end: t1.addingTimeInterval(60)),  // different end
+            E(cal: "work", title: "Standup", start: t0, end: t1),
+        ]
+        let kept = events.uniqued { EventKey(title: $0.title, start: $0.start, end: $0.end, isAllDay: false) }
+        #expect(kept.map(\.cal) == ["work", "icloud", "work"])
+        #expect(kept.map(\.title) == ["Work hours", "Work hours", "Standup"])
+    }
+}
+
 @Suite struct FormattingTests {
     @Test func compactTokens() {
         #expect(TokenFormat.compact(950) == "950")

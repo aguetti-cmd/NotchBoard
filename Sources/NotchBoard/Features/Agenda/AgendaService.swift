@@ -1,6 +1,7 @@
 import AppKit
 import EventKit
 import Observation
+import NotchBoardCore
 
 /// Today's and tomorrow's events, plus reminders due today or overdue.
 @MainActor @Observable
@@ -90,9 +91,12 @@ final class AgendaService {
 
         if eventAccess == .granted {
             let predicate = store.predicateForEvents(withStart: startOfToday, end: endOfTomorrow, calendars: nil)
-            events = store.events(matching: predicate)
+            let raw = store.events(matching: predicate)
+            events = raw
                 .filter { $0.endDate > now }
                 .sorted { ($0.isAllDay ? 0 : 1, $0.startDate) < ($1.isAllDay ? 0 : 1, $1.startDate) }
+                // The same event often arrives from two calendars (work and iCloud).
+                .uniqued { EventKey(title: $0.title ?? "", start: $0.startDate, end: $0.endDate, isAllDay: $0.isAllDay) }
                 .map {
                     EventItem(id: $0.eventIdentifier ?? UUID().uuidString,
                               title: $0.title ?? "Untitled",
@@ -100,6 +104,10 @@ final class AgendaService {
                               isAllDay: $0.isAllDay,
                               color: RGB($0.calendar?.cgColor))
                 }
+            if ProcessInfo.processInfo.environment["NOTCHBOARD_DEBUG"] != nil {
+                let upcoming = raw.filter { $0.endDate > now }.count
+                FileHandle.standardError.write(Data("events upcoming \(upcoming), after merging duplicates \(events.count)\n".utf8))
+            }
         } else {
             events = []
         }
