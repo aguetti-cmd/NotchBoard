@@ -24,8 +24,19 @@ struct AgendaCard: View {
                 Text("No more events today or tomorrow.")
                     .font(.system(size: 12)).foregroundStyle(Theme.secondary)
             } else {
+                let shown = Array(agenda.events.prefix(3))
+                let today = shown.filter { Calendar.current.isDateInToday($0.start) || $0.start <= .now }
+                let tomorrow = shown.filter { !today.contains($0) }
                 VStack(alignment: .leading, spacing: 5) {
-                    ForEach(agenda.events.prefix(3)) { EventRow(event: $0) }
+                    if !today.isEmpty {
+                        // Heading only needed when tomorrow is also listed.
+                        if !tomorrow.isEmpty { DayHeading(title: "Today") }
+                        ForEach(today) { EventRow(event: $0) }
+                    }
+                    if !tomorrow.isEmpty {
+                        DayHeading(title: "Tomorrow")
+                        ForEach(tomorrow) { EventRow(event: $0) }
+                    }
                     if agenda.events.count > 3 {
                         Text("+\(agenda.events.count - 3) more").font(.system(size: 10)).foregroundStyle(Theme.tertiary)
                     }
@@ -70,19 +81,33 @@ private struct EventRow: View {
             Text(timeLabel)
                 .font(.system(size: 11, weight: .medium).monospacedDigit())
                 .foregroundStyle(isNow ? Theme.accent : Theme.secondary)
-                .frame(width: 70, alignment: .leading)
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+                .frame(width: 54, alignment: .leading)
             Text(event.title).font(.system(size: 12)).lineLimit(1)
         }
     }
 
     private var isNow: Bool { !event.isAllDay && event.start <= .now && event.end > .now }
 
+    /// The day is shown by the Today/Tomorrow headings, so this is time only.
     private var timeLabel: String {
-        let tomorrow = !Calendar.current.isDateInToday(event.start) && event.start > .now
-        if event.isAllDay { return tomorrow ? "Tmrw all day" : "All day" }
+        if event.isAllDay { return "All day" }
         if isNow { return "Now" }
-        let time = event.start.formatted(date: .omitted, time: .shortened)
-        return tomorrow ? "Tmrw \(time)" : time
+        return event.start.formatted(date: .omitted, time: .shortened)
+    }
+}
+
+private struct DayHeading: View {
+    let title: String
+
+    var body: some View {
+        Text(title)
+            .font(.system(size: 9, weight: .semibold))
+            .textCase(.uppercase)
+            .kerning(0.5)
+            .foregroundStyle(Theme.tertiary)
+            .padding(.top, 2)
     }
 }
 
