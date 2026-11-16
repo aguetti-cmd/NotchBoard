@@ -20,6 +20,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             model.isPinned = true
             notch?.expand()
         }
+        if CommandLine.arguments.contains("--settings") { openSettings() }
         // Verification aid: `--snapshot <path.png>` renders the open panel
         // offscreen once data has loaded, then quits. Needs no screen recording.
         if let i = CommandLine.arguments.firstIndex(of: "--snapshot"), i + 1 < CommandLine.arguments.count {
@@ -82,15 +83,33 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     @objc func openSettings() {
-        if settingsWindow == nil {
-            let host = NSHostingController(rootView: SettingsView(model: model))
+        // Settings must sit below the open panel, which floats above all windows.
+        let gap: CGFloat = 12
+        let screen = notch?.screen ?? NSScreen.main
+        let visible = screen?.visibleFrame ?? CGRect(x: 0, y: 0, width: 1440, height: 900)
+        let panelBottom = notch?.panelFrame.minY ?? visible.maxY
+        let top = min(visible.maxY, panelBottom) - gap
+        let titleBar: CGFloat = 32
+        let height = max(min(680, top - visible.minY - gap - titleBar), 300)
+
+        let root = SettingsView(model: model, height: height)
+        if let window = settingsWindow, let host = window.contentViewController as? NSHostingController<SettingsView> {
+            host.rootView = root
+        } else {
+            let host = NSHostingController(rootView: root)
+            host.sizingOptions = []  // size is set below, before positioning
             let window = NSWindow(contentViewController: host)
             window.title = "NotchBoard Settings"
             window.styleMask = [.titled, .closable]
             window.isReleasedWhenClosed = false
             window.delegate = self
-            window.center()
             settingsWindow = window
+        }
+        if let window = settingsWindow {
+            window.setContentSize(CGSize(width: 420, height: height))
+            let size = window.frame.size
+            let x = (screen?.frame.midX ?? visible.midX) - size.width / 2
+            window.setFrameTopLeftPoint(CGPoint(x: x, y: top))
         }
         notch?.beginPreview()
         NSApp.activate()

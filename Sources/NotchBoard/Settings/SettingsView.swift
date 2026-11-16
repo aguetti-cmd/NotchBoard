@@ -4,6 +4,8 @@ import NotchBoardCore
 
 struct SettingsView: View {
     let model: AppModel
+    /// Fits the space below the open panel; the form scrolls inside it.
+    let height: CGFloat
 
     @State private var query = ""
     @State private var results: [Place] = []
@@ -85,8 +87,7 @@ struct SettingsView: View {
             }
         }
         .formStyle(.grouped)
-        .frame(width: 420)
-        .fixedSize(horizontal: false, vertical: true)
+        .frame(width: 420, height: height)
         .onAppear { launchAtLogin = model.preferences.launchAtLogin }
     }
 

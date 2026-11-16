@@ -148,6 +148,9 @@ final class NotchController {
         model.agenda.refresh()
     }
 
+    var panelFrame: CGRect { panel.frame }
+    var screen: NSScreen? { panel.screen ?? Self.targetScreen() }
+
     func beginPreview() {
         model.isPreviewing = true
         expand()
