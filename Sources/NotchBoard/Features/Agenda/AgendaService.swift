@@ -63,7 +63,7 @@ final class AgendaService {
 
     func requestAccessIfNeeded() {
         if eventAccess == .unknown {
-            store.requestFullAccessToEvents { [weak self] granted, _ in
+            store.requestFullAccessToEvents { @Sendable [weak self] granted, _ in
                 Task { @MainActor in
                     self?.eventAccess = granted ? .granted : .denied
                     self?.refresh()
@@ -71,7 +71,7 @@ final class AgendaService {
             }
         }
         if reminderAccess == .unknown {
-            store.requestFullAccessToReminders { [weak self] granted, _ in
+            store.requestFullAccessToReminders { @Sendable [weak self] granted, _ in
                 Task { @MainActor in
                     self?.reminderAccess = granted ? .granted : .denied
                     self?.refresh()
@@ -106,20 +106,30 @@ final class AgendaService {
 
         if reminderAccess == .granted {
             let predicate = store.predicateForIncompleteReminders(withDueDateStarting: nil, ending: endOfToday, calendars: nil)
-            store.fetchReminders(matching: predicate) { [weak self] found in
-                let items = (found ?? []).map { r -> ReminderItem in
-                    let due = r.dueDateComponents.flatMap { Calendar.current.date(from: $0) }
-                    return ReminderItem(id: r.calendarItemIdentifier,
-                                        title: r.title ?? "Untitled",
-                                        due: due,
-                                        isOverdue: due.map { $0 < startOfToday } ?? false)
+            // EventKit calls this on its own background queue. The closure must be
+            // @Sendable (not main-actor isolated), or Swift's runtime check traps.
+            store.fetchReminders(matching: predicate) { @Sendable [weak self] found in
+                let items = Self.reminderItems(found, startOfToday: startOfToday)
+                if ProcessInfo.processInfo.environment["NOTCHBOARD_DEBUG"] != nil {
+                    FileHandle.standardError.write(Data("reminders fetched off-main: \(items.count) on \(Thread.isMainThread ? "main" : "background")\n".utf8))
                 }
-                .sorted { ($0.due ?? .distantFuture) < ($1.due ?? .distantFuture) }
                 Task { @MainActor in self?.reminders = items }
             }
         } else {
             reminders = []
         }
+    }
+
+    /// Runs on EventKit's queue, so it touches no actor state.
+    nonisolated private static func reminderItems(_ found: [EKReminder]?, startOfToday: Date) -> [ReminderItem] {
+        (found ?? []).map { r in
+            let due = r.dueDateComponents.flatMap { Calendar.current.date(from: $0) }
+            return ReminderItem(id: r.calendarItemIdentifier,
+                                title: r.title ?? "Untitled",
+                                due: due,
+                                isOverdue: due.map { $0 < startOfToday } ?? false)
+        }
+        .sorted { ($0.due ?? .distantFuture) < ($1.due ?? .distantFuture) }
     }
 
     func complete(_ item: ReminderItem) {
