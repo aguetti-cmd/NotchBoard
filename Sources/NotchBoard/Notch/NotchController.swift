@@ -116,7 +116,7 @@ final class NotchController {
             if expandedZone.contains(point) {
                 collapseTask?.cancel()
                 collapseTask = nil
-            } else if !model.isPinned, collapseTask == nil {
+            } else if !model.isPinned, !model.isPreviewing, collapseTask == nil {
                 collapseTask = Task { [weak self] in
                     try? await Task.sleep(for: .milliseconds(280))
                     guard !Task.isCancelled else { return }
@@ -148,9 +148,19 @@ final class NotchController {
         model.agenda.refresh()
     }
 
+    func beginPreview() {
+        model.isPreviewing = true
+        expand()
+    }
+
+    func endPreview() {
+        model.isPreviewing = false
+        collapseIfMouseOutside()
+    }
+
     func collapse() {
         collapseTask = nil
-        guard !model.isPinned else { return }
+        guard !model.isPinned, !model.isPreviewing else { return }
         model.isExpanded = false
         panel.ignoresMouseEvents = true
     }

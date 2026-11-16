@@ -17,6 +17,29 @@ final class Preferences {
         didSet { defaults.set(showUsage, forKey: "showUsage") }
     }
 
+    enum GlassStyle: String, CaseIterable, Identifiable {
+        case regular, clear
+        var id: String { rawValue }
+        var title: String { self == .regular ? "Regular" : "Clear" }
+    }
+
+    /// Liquid Glass on the open panel. The collapsed notch stays solid black.
+    var glassEnabled: Bool {
+        didSet { defaults.set(glassEnabled, forKey: "glassEnabled") }
+    }
+
+    var glassStyle: GlassStyle {
+        didSet { defaults.set(glassStyle.rawValue, forKey: "glassStyle") }
+    }
+
+    /// 0 is solid black, 1 is untinted glass.
+    var glassAmount: Double {
+        didSet { defaults.set(glassAmount, forKey: "glassAmount") }
+    }
+
+    /// What the panel actually renders, after the toggle.
+    var effectiveGlass: Double { glassEnabled ? glassAmount : 0 }
+
     init() {
         if let data = defaults.data(forKey: "place"),
            let saved = try? JSONDecoder().decode(Place.self, from: data) {
@@ -25,6 +48,9 @@ final class Preferences {
             place = .bangkok
         }
         showUsage = defaults.object(forKey: "showUsage") as? Bool ?? true
+        glassEnabled = defaults.object(forKey: "glassEnabled") as? Bool ?? true
+        glassStyle = GlassStyle(rawValue: defaults.string(forKey: "glassStyle") ?? "") ?? .regular
+        glassAmount = min(max(defaults.object(forKey: "glassAmount") as? Double ?? 0.6, 0), 1)
     }
 
     // MARK: Launch at login

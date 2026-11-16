@@ -13,6 +13,28 @@ struct SettingsView: View {
 
     var body: some View {
         Form {
+            Section {
+                Toggle("Liquid Glass", isOn: Bindable(model.preferences).glassEnabled)
+                Picker("Style", selection: Bindable(model.preferences).glassStyle) {
+                    ForEach(Preferences.GlassStyle.allCases) { Text($0.title).tag($0) }
+                }
+                .pickerStyle(.segmented)
+                .disabled(!model.preferences.glassEnabled)
+                LabeledContent("Amount") {
+                    HStack(spacing: 8) {
+                        Text("Solid").font(.caption).foregroundStyle(.secondary)
+                        Slider(value: Bindable(model.preferences).glassAmount, in: 0...1)
+                        Text("Glass").font(.caption).foregroundStyle(.secondary)
+                    }
+                }
+                .disabled(!model.preferences.glassEnabled)
+            } header: {
+                Text("Appearance")
+            } footer: {
+                Text("The panel stays open while Settings is open, so you can see changes live. The collapsed notch stays black.")
+                    .font(.caption).foregroundStyle(.secondary)
+            }
+
             Section("Weather") {
                 LabeledContent("Location", value: model.preferences.place.name)
                 HStack {

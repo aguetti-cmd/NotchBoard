@@ -14,6 +14,10 @@ final class AppModel {
         didSet { music.fastPolling = isExpanded }
     }
     var isPinned = false
+    /// Held open while Settings is on screen, so appearance changes show live.
+    var isPreviewing = false
+    /// Set by the AppDelegate; called from the panel's gear button.
+    @ObservationIgnored var openSettings: () -> Void = {}
 
     init() {
         weather = WeatherService(preferences: preferences)

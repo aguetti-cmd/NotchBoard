@@ -40,6 +40,17 @@ struct ExpandedView: View {
             }
             Spacer(minLength: notchSize.width + 20)
             Button {
+                model.openSettings()
+            } label: {
+                Image(systemName: "gearshape")
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundStyle(Theme.secondary)
+                    .frame(width: 24, height: 20)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .help("Settings")
+            Button {
                 model.isPinned.toggle()
             } label: {
                 Image(systemName: model.isPinned ? "pin.fill" : "pin")
@@ -60,6 +71,7 @@ struct Card<Content: View>: View {
     let symbol: String
     var action: (() -> Void)? = nil
     @ViewBuilder let content: Content
+    @Environment(\.glassAmount) private var glass
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -79,7 +91,14 @@ struct Card<Content: View>: View {
         }
         .padding(12)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-        .background(Theme.card, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+        // More glass behind means a darker card, so white text keeps its contrast.
+        .background {
+            let card = RoundedRectangle(cornerRadius: 14, style: .continuous)
+            ZStack {
+                card.fill(Color.black.opacity(0.28 * glass))
+                card.fill(Theme.card)
+            }
+        }
     }
 }
 

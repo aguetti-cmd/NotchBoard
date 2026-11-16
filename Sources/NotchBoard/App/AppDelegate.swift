@@ -11,6 +11,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         notch = NotchController(model: model)
+        model.openSettings = { [weak self] in self?.openSettings() }
         setUpStatusItem()
         model.start()
 
@@ -87,11 +88,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             window.title = "NotchBoard Settings"
             window.styleMask = [.titled, .closable]
             window.isReleasedWhenClosed = false
+            window.delegate = self
             window.center()
             settingsWindow = window
         }
+        notch?.beginPreview()
         NSApp.activate()
         settingsWindow?.makeKeyAndOrderFront(nil)
+    }
+}
+
+extension AppDelegate: NSWindowDelegate {
+    func windowWillClose(_ notification: Notification) {
+        if (notification.object as? NSWindow) === settingsWindow {
+            notch?.endPreview()
+        }
     }
 }
 

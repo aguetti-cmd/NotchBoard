@@ -54,9 +54,11 @@ struct NotchRootView: View {
 
     var body: some View {
         let expanded = model.isExpanded
+        let shape = NotchShape(bottomRadius: expanded ? 26 : 10, topFlare: expanded ? 10 : 6)
+        // Glass only while open; collapsed it must match the black hardware notch.
+        let glass = expanded ? model.preferences.effectiveGlass : 0
         ZStack(alignment: .top) {
-            NotchShape(bottomRadius: expanded ? 26 : 10, topFlare: expanded ? 10 : 6)
-                .fill(Color.black)
+            PanelBackground(shape: shape, glass: glass, style: model.preferences.glassStyle)
                 .frame(width: size.width, height: size.height)
                 .overlay(alignment: .top) {
                     Group {
@@ -69,15 +71,44 @@ struct NotchRootView: View {
                         }
                     }
                     .frame(width: size.width, height: size.height, alignment: .top)
-                    .clipShape(NotchShape(bottomRadius: expanded ? 26 : 10, topFlare: expanded ? 10 : 6))
+                    .clipShape(shape)
                 }
                 .shadow(color: .black.opacity(expanded ? 0.35 : 0), radius: 12, y: 4)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .animation(Theme.spring, value: expanded)
         .animation(Theme.spring, value: model.music.isPlaying)
+        .animation(.easeOut(duration: 0.2), value: glass)
+        .environment(\.glassAmount, glass)
         .environment(\.colorScheme, .dark)
     }
+}
+
+/// Liquid Glass under a black tint. `glass` 0 is solid black, 1 is bare glass.
+struct PanelBackground: View {
+    let shape: NotchShape
+    let glass: Double
+    let style: Preferences.GlassStyle
+
+    var body: some View {
+        ZStack {
+            if glass > 0 { glassLayer }
+            shape.fill(Color.black.opacity(1 - glass))
+        }
+    }
+
+    @ViewBuilder private var glassLayer: some View {
+        if #available(macOS 26.0, *) {
+            Color.clear.glassEffect(style == .clear ? .clear : .regular, in: shape)
+        } else {
+            shape.fill(.ultraThinMaterial)
+        }
+    }
+}
+
+extension EnvironmentValues {
+    /// How much glass shows through, so cards can add contrast to match.
+    @Entry var glassAmount: Double = 0
 }
 
 /// Collapsed: artwork in the left wing and a live waveform in the right

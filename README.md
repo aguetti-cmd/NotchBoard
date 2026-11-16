@@ -23,6 +23,15 @@ Tests (pure logic only):
 swift test
 ```
 
+## Appearance
+
+The open panel uses Liquid Glass (macOS 26+; older systems fall back to a blur
+material). Settings, Appearance: on/off, Regular or Clear style, and an Amount
+slider from Solid (black) to Glass. The amount is a black tint over the glass.
+Cards darken as the glass increases to keep text readable. The collapsed notch
+always stays solid black to match the hardware. Opening Settings (gear in the
+panel header, or the menu bar icon) holds the panel open for a live preview.
+
 ## What it shows
 
 | Card | Source | Notes |
