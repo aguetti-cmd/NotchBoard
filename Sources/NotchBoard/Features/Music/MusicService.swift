@@ -73,7 +73,13 @@ final class MusicService {
         case .failure(let error):
             if error.isNotAuthorized { clear(.notAuthorized) }
             else if error.isAppGone { clear(.notRunning) }
-            else { clear(.failed(error.message)) }
+            else {
+                // Short fixed text in the UI; script detail only in debug logs.
+                if ProcessInfo.processInfo.environment["NOTCHBOARD_DEBUG"] != nil {
+                    FileHandle.standardError.write(Data("Music script error \(error.code): \(error.message)\n".utf8))
+                }
+                clear(.failed("Couldn't read Music right now."))
+            }
         }
     }
 

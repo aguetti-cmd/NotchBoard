@@ -20,6 +20,7 @@ final class NotchController {
     private let panel: NotchPanel
     private var monitors: [Any] = []
     private var collapseTask: Task<Void, Never>?
+    private var expandTask: Task<Void, Never>?
     private var screenFrame: CGRect = .zero
 
     init(model: AppModel) {
@@ -42,6 +43,14 @@ final class NotchController {
             MainActor.assumeIsolated { self?.position() }
         }
         installMouseMonitors()
+
+        if ProcessInfo.processInfo.environment["NOTCHBOARD_DEBUG"] != nil {
+            Task { [weak self] in
+                try? await Task.sleep(for: .seconds(3))
+                guard let self else { return }
+                FileHandle.standardError.write(Data("after 3s panel \(self.panel.frame) visible \(self.panel.isVisible) screen \(self.panel.screen?.frame ?? .zero)\n".utf8))
+            }
+        }
     }
 
     // MARK: Placement
@@ -115,7 +124,17 @@ final class NotchController {
                 }
             }
         } else if hotZone.contains(point) {
-            expand()
+            // Short dwell, so sweeping along the menu bar does not open it.
+            guard expandTask == nil else { return }
+            expandTask = Task { [weak self] in
+                try? await Task.sleep(for: .milliseconds(150))
+                guard let self, !Task.isCancelled else { return }
+                self.expandTask = nil
+                if self.hotZone.contains(NSEvent.mouseLocation) { self.expand() }
+            }
+        } else {
+            expandTask?.cancel()
+            expandTask = nil
         }
     }
 
@@ -153,6 +172,7 @@ final class NotchPanel: NSPanel {
         hidesOnDeactivate = false
         becomesKeyOnlyIfNeeded = true
         isMovable = false
+        acceptsMouseMovedEvents = true  // local monitor still sees moves when the app is active
         level = NSWindow.Level(rawValue: NSWindow.Level.mainMenu.rawValue + 3)
         collectionBehavior = [.canJoinAllSpaces, .stationary, .fullScreenAuxiliary, .ignoresCycle]
     }

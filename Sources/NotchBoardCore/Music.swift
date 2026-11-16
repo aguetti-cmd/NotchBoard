@@ -26,13 +26,37 @@ public struct NowPlaying: Sendable, Equatable {
 public enum MusicScript {
     public static let separator = "\u{1F}"
 
+    /// Every field read is guarded: streams and some tracks return
+    /// `missing value` for album, artist or duration.
     public static let state = """
     tell application "Music"
         set pState to player state as string
         if pState is "stopped" then return "stopped"
         set sep to (character id 31)
-        set t to current track
-        return pState & sep & (name of t) & sep & (artist of t) & sep & (album of t) & sep & ((duration of t) as string) & sep & ((player position) as string)
+        set tName to ""
+        set tArtist to ""
+        set tAlbum to ""
+        set tDuration to "0"
+        set tPosition to "0"
+        try
+            set t to current track
+            try
+                set tName to (name of t) as string
+            end try
+            try
+                set tArtist to (artist of t) as string
+            end try
+            try
+                set tAlbum to (album of t) as string
+            end try
+            try
+                set tDuration to (duration of t) as string
+            end try
+        end try
+        try
+            set tPosition to (player position) as string
+        end try
+        return pState & sep & tName & sep & tArtist & sep & tAlbum & sep & tDuration & sep & tPosition
     end tell
     """
 
