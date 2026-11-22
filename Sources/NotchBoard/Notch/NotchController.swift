@@ -7,7 +7,10 @@ import NotchBoardCore
 final class NotchLayout {
     var notchSize = CGSize(width: 190, height: 32)
     var hasNotch = false
-    static let expandedSize = CGSize(width: 780, height: 250)
+    /// World clock row height. The panel grows by this plus the 10 pt gap above it,
+    /// so the cards keep their original size.
+    static let worldClockHeight: CGFloat = 30
+    static let expandedSize = CGSize(width: 780, height: 250 + worldClockHeight + 10)
     /// Extra width each side of the notch while music plays.
     static let wingWidth: CGFloat = 46
 }

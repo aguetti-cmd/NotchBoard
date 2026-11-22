@@ -17,6 +17,9 @@ final class Preferences {
         didSet { defaults.set(showUsage, forKey: "showUsage") }
     }
 
+    /// World clock places, home first. Fixed for now; no Settings UI yet.
+    let clockZones = ClockZone.defaults
+
     enum GlassStyle: String, CaseIterable, Identifiable {
         case regular, clear
         var id: String { rawValue }

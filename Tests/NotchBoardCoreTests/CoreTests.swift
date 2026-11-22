@@ -158,3 +158,40 @@ import Testing
         #expect(!flat.hasNotch && flat.notch.midX == 756 && flat.notch.maxY == 982)
     }
 }
+
+@Suite struct WorldClockTests {
+    func at(_ iso: String) -> Date { ISO8601DateFormatter().date(from: iso)! }
+    func times(_ iso: String) -> [String] {
+        WorldClock.readings(at: at(iso), zones: ClockZone.defaults).map { "\($0.name) \($0.time)" }
+    }
+
+    @Test func sameDayWithHalfHourOffset() {
+        let r = WorldClock.readings(at: at("2026-11-24T09:05:00Z"), zones: ClockZone.defaults)
+        #expect(r.map(\.time) == ["16:05", "14:35", "09:05", "03:05"])
+        #expect(r.map(\.dayOffset) == [0, 0, 0, 0])
+        #expect(r.map(\.isNight) == [false, false, false, true])
+        #expect(r.map(\.isHome) == [true, false, false, false])
+        #expect(r[0].weekday == "Tue")
+    }
+
+    @Test func dayOffsetsWhenBangkokIsTomorrow() {
+        let r = WorldClock.readings(at: at("2026-11-24T18:30:00Z"), zones: ClockZone.defaults)
+        #expect(r.map(\.time) == ["01:30", "00:00", "18:30", "12:30"])
+        #expect(r.map(\.dayOffset) == [0, 0, -1, -1])
+        #expect(r[3].weekday == "Tue" && r[0].weekday == "Wed")
+    }
+
+    @Test func clockChangesMoveEuropeAndUSSeparately() {
+        // Winter, US summer time only (from 14 March), Europe too (from 28 March).
+        #expect(times("2026-11-24T15:00:00Z") == ["Bangkok 22:00", "Bangalore 20:30", "Dublin 15:00", "Austin 09:00"])
+        #expect(times("2027-03-16T15:00:00Z") == ["Bangkok 22:00", "Bangalore 20:30", "Dublin 15:00", "Austin 10:00"])
+        #expect(times("2027-04-06T15:00:00Z") == ["Bangkok 22:00", "Bangalore 20:30", "Dublin 16:00", "Austin 10:00"])
+    }
+
+    @Test func unknownZoneIsDropped() {
+        let zones = [ClockZone(name: "Nowhere", identifier: "Mars/Olympus")] + ClockZone.defaults
+        let r = WorldClock.readings(at: at("2026-11-24T09:05:00Z"), zones: zones)
+        #expect(r.map(\.name) == ["Bangkok", "Bangalore", "Dublin", "Austin"])
+        #expect(r[0].isHome)
+    }
+}

@@ -1,7 +1,7 @@
 import SwiftUI
 import NotchBoardCore
 
-/// The open panel: a header beside the notch, then three columns.
+/// The open panel: a header beside the notch, three columns, then the world clock row.
 struct ExpandedView: View {
     let model: AppModel
     let notchSize: CGSize
@@ -10,18 +10,22 @@ struct ExpandedView: View {
         VStack(spacing: 0) {
             header
                 .frame(height: max(notchSize.height, 28))
-            HStack(alignment: .top, spacing: 10) {
-                MusicCard(music: model.music)
-                    .frame(width: 230)
-                AgendaCard(agenda: model.agenda)
-                    .frame(maxWidth: .infinity)
-                VStack(spacing: 10) {
-                    WeatherCard(weather: model.weather)
-                    if model.preferences.showUsage {
-                        UsageCard(usage: model.usage)
+            VStack(spacing: 10) {
+                HStack(alignment: .top, spacing: 10) {
+                    MusicCard(music: model.music)
+                        .frame(width: 230)
+                    AgendaCard(agenda: model.agenda)
+                        .frame(maxWidth: .infinity)
+                    VStack(spacing: 10) {
+                        WeatherCard(weather: model.weather)
+                        if model.preferences.showUsage {
+                            UsageCard(usage: model.usage)
+                        }
                     }
+                    .frame(width: 210)
                 }
-                .frame(width: 210)
+                WorldClockRow(zones: model.preferences.clockZones)
+                    .frame(height: NotchLayout.worldClockHeight)
             }
             .padding(.horizontal, 22)
             .padding(.top, 6)

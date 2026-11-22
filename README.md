@@ -40,6 +40,7 @@ panel header, or the menu bar icon) holds the panel open for a live preview.
 | Agenda | EventKit | Remaining events today and tomorrow (3 shown), reminders due today or overdue (3 shown). Click the circle to complete a reminder. |
 | Weather | Open-Meteo, no key | Defaults to Bangkok. Change the city in Settings. Refreshes every 30 min. |
 | Claude today | `~/.claude/projects/**/*.jsonl` | Local only, nothing sent. Total tokens today (cache reads included), output tokens, sessions, 7-day bars. Responses are deduped by message and request id. Shows this Mac's usage only. No cost estimate. |
+| World clock | macOS time zone data | Row under the cards: Bangkok (home), Bangalore, Dublin, Austin. Updates every minute. A weekday label appears when a place's date differs from Bangkok's; moon from 20:00 to 06:59 local. Places are fixed in `ClockZone.defaults` (no Settings UI yet). |
 
 ## Permissions
 
