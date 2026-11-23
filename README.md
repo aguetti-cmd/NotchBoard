@@ -36,8 +36,8 @@ panel header, or the menu bar icon) holds the panel open for a live preview.
 
 | Card | Source | Notes |
 |---|---|---|
-| Music | Apple Music via AppleScript | Never launches Music. Polls every 5 s collapsed, 1 s open, plus Music's own change notification. Artwork in the collapsed wings while playing. |
-| Agenda | EventKit | Remaining events today and tomorrow (3 shown), reminders due today or overdue (3 shown). Click the circle to complete a reminder. |
+| Music | Apple Music via AppleScript | Never launches Music. Polls every 5 s collapsed, 1 s open, plus Music's own change notification. Artwork in the collapsed wings while playing. Asks macOS for the Automation permission without prompting until it is granted; if that check gives no answer in 2 s it is dropped for the launch and the script finds out instead. Shows "Waiting for Music" when macOS or Music has not answered for 3 s. |
+| Agenda | EventKit | Remaining events today and tomorrow (3 shown, today's first), reminders due today or overdue (3 shown). Click the circle to complete a reminder. |
 | Weather | Open-Meteo, no key | Defaults to Bangkok. Change the city in Settings. Refreshes every 30 min. |
 | Claude today | `~/.claude/projects/**/*.jsonl` | Local only, nothing sent. Total tokens today (cache reads included), output tokens, sessions, 7-day bars. Responses are deduped by message and request id. Shows this Mac's usage only. No cost estimate. |
 | World clock | macOS time zone data | Row under the cards: Bangkok (home), Bangalore, Dublin, Austin. Updates every minute. A weekday label appears when a place's date differs from Bangkok's; moon from 20:00 to 06:59 local. Places are fixed in `ClockZone.defaults` (no Settings UI yet). |
@@ -45,12 +45,16 @@ panel header, or the menu bar icon) holds the panel open for a live preview.
 ## Permissions
 
 The first launch asks for Calendars and Reminders. The first Music refresh
-asks to control Music (Automation). Settings has a row for each with a
-shortcut to the right System Settings pane.
+asks to control Music (Automation); if macOS reports the permission as not
+decided, the Music card also shows an Allow button. Settings has a row for
+each with a shortcut to the right System Settings pane.
 
-The build is signed ad hoc, so macOS may ask again after a rebuild. A stable
-signing identity (Xcode, Settings, Accounts, free personal team) would stop
-that. Not set up yet.
+`build-app.sh` signs with `NOTCHBOARD_SIGN_IDENTITY` if set, else the first
+"Apple Development" identity in the keychain (Xcode, Settings, Accounts, free
+personal team), else ad hoc. An ad-hoc signature changes with every build, so
+macOS asks for all three permissions again after each rebuild. No identity is
+set up on the mini yet, and whether a personal-team identity keeps the grants
+across rebuilds is still to be confirmed (rebuild twice, agenda still shows).
 
 ## Layout
 
@@ -71,8 +75,10 @@ scripts/build-app.sh      release build into build/NotchBoard.app
 
 - `NotchBoard --pinned` starts open and pinned.
 - `NotchBoard --snapshot out.png` renders the open panel offscreen after 6 s and quits.
-  Calendar and Reminders show as denied when the binary is started from a shell.
-- `NOTCHBOARD_DEBUG=1` logs screen, notch and panel geometry to stderr.
+  It never asks for permissions: cards show whatever access the launching
+  process already has, which from a shell is usually none.
+- `NOTCHBOARD_DEBUG=1` logs screen, notch and panel geometry, the Music
+  permission result and Music script errors to stderr.
 
 ## Lessons carried from v1
 

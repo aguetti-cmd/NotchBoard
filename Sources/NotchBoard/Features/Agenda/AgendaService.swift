@@ -42,7 +42,9 @@ final class AgendaService {
     private let store = EKEventStore()
     private var observer: NSObjectProtocol?
 
-    func start() {
+    /// `requestAccess` false reads the current access without showing a
+    /// macOS prompt (used by `--snapshot`).
+    func start(requestAccess: Bool = true) {
         eventAccess = Self.access(EKEventStore.authorizationStatus(for: .event))
         reminderAccess = Self.access(EKEventStore.authorizationStatus(for: .reminder))
         observer = NotificationCenter.default.addObserver(
@@ -50,7 +52,7 @@ final class AgendaService {
         ) { [weak self] _ in
             MainActor.assumeIsolated { self?.refresh() }
         }
-        requestAccessIfNeeded()
+        if requestAccess { requestAccessIfNeeded() }
         refresh()
     }
 
@@ -92,9 +94,10 @@ final class AgendaService {
         if eventAccess == .granted {
             let predicate = store.predicateForEvents(withStart: startOfToday, end: endOfTomorrow, calendars: nil)
             let raw = store.events(matching: predicate)
-            events = raw
-                .filter { $0.endDate > now }
-                .sorted { ($0.isAllDay ? 0 : 1, $0.startDate) < ($1.isAllDay ? 0 : 1, $1.startDate) }
+            // Today before tomorrow, so tomorrow's all-day entries cannot push
+            // today's meetings out of the three rows the card shows.
+            events = AgendaOrder.sorted(raw.filter { $0.endDate > now }, startOfTomorrow: endOfToday,
+                                        start: { $0.startDate }, isAllDay: { $0.isAllDay })
                 // The same event often arrives from two calendars (work and iCloud).
                 .uniqued { EventKey(title: $0.title ?? "", start: $0.startDate, end: $0.endDate, isAllDay: $0.isAllDay) }
                 .map {

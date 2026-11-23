@@ -23,9 +23,12 @@ final class AppModel {
         weather = WeatherService(preferences: preferences)
     }
 
-    func start() {
+    /// `interactive` false starts every service without macOS permission
+    /// prompts; cards then show whatever access already exists.
+    func start(interactive: Bool = true) {
+        music.promptsAllowed = interactive
         music.start()
-        agenda.start()
+        agenda.start(requestAccess: interactive)
         weather.start()
         if preferences.showUsage { usage.start() }
     }

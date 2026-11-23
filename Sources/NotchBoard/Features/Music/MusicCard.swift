@@ -7,8 +7,14 @@ struct MusicCard: View {
     var body: some View {
         Card(title: "Music", symbol: "music.note", action: music.openMusic) {
             switch music.status {
+            case .checking:
+                NoticeView(text: "Checking Music…")
+            case .waiting:
+                NoticeView(text: "Waiting for Music. If macOS is asking for permission, answer the prompt.")
             case .notRunning:
                 NoticeView(text: "Music isn't open.", buttonTitle: "Open Music", action: music.openMusic)
+            case .needsPermission:
+                NoticeView(text: "Music control needs your OK.", buttonTitle: "Allow", action: music.requestPermission)
             case .notAuthorized:
                 NoticeView(text: "NotchBoard needs permission to control Music.",
                            buttonTitle: "Open Automation Settings") { SystemSettings.open("Privacy_Automation") }

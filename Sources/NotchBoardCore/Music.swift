@@ -27,48 +27,54 @@ public enum MusicScript {
     public static let separator = "\u{1F}"
 
     /// Every field read is guarded: streams and some tracks return
-    /// `missing value` for album, artist or duration.
+    /// `missing value` for album, artist or duration. The timeout keeps a
+    /// hung Music from blocking the script queue for AppleScript's default
+    /// two minutes.
     public static let state = """
     tell application "Music"
-        set pState to player state as string
-        if pState is "stopped" then return "stopped"
-        set sep to (character id 31)
-        set tName to ""
-        set tArtist to ""
-        set tAlbum to ""
-        set tDuration to "0"
-        set tPosition to "0"
-        try
-            set t to current track
+        with timeout of 5 seconds
+            set pState to player state as string
+            if pState is "stopped" then return "stopped"
+            set sep to (character id 31)
+            set tName to ""
+            set tArtist to ""
+            set tAlbum to ""
+            set tDuration to "0"
+            set tPosition to "0"
             try
-                set tName to (name of t) as string
+                set t to current track
+                try
+                    set tName to (name of t) as string
+                end try
+                try
+                    set tArtist to (artist of t) as string
+                end try
+                try
+                    set tAlbum to (album of t) as string
+                end try
+                try
+                    set tDuration to (duration of t) as string
+                end try
             end try
             try
-                set tArtist to (artist of t) as string
+                set tPosition to (player position) as string
             end try
-            try
-                set tAlbum to (album of t) as string
-            end try
-            try
-                set tDuration to (duration of t) as string
-            end try
-        end try
-        try
-            set tPosition to (player position) as string
-        end try
-        return pState & sep & tName & sep & tArtist & sep & tAlbum & sep & tDuration & sep & tPosition
+            return pState & sep & tName & sep & tArtist & sep & tAlbum & sep & tDuration & sep & tPosition
+        end timeout
     end tell
     """
 
     public static let artwork = """
     tell application "Music"
-        try
-            return raw data of artwork 1 of current track
-        on error
+        with timeout of 10 seconds
             try
-                return data of artwork 1 of current track
+                return raw data of artwork 1 of current track
+            on error
+                try
+                    return data of artwork 1 of current track
+                end try
             end try
-        end try
+        end timeout
     end tell
     """
 

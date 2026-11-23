@@ -135,6 +135,27 @@ import Testing
         #expect(kept.map(\.cal) == ["work", "icloud", "work"])
         #expect(kept.map(\.title) == ["Work hours", "Work hours", "Standup"])
     }
+
+    @Test func todayComesBeforeTomorrowsAllDayEvents() {
+        let midnight = Date(timeIntervalSince1970: 1_000_000)  // start of tomorrow
+        struct E { let title: String; let start: Date; let allDay: Bool }
+        let events = [
+            E(title: "Holiday tomorrow", start: midnight, allDay: true),
+            E(title: "Trip tomorrow", start: midnight, allDay: true),
+            E(title: "Standup tomorrow", start: midnight.addingTimeInterval(9 * 3600), allDay: false),
+            E(title: "Review today", start: midnight.addingTimeInterval(-3 * 3600), allDay: false),
+            E(title: "Call today", start: midnight.addingTimeInterval(-6 * 3600), allDay: false),
+            E(title: "Leave today", start: midnight.addingTimeInterval(-24 * 3600), allDay: true),
+            E(title: "Conference since Monday", start: midnight.addingTimeInterval(-72 * 3600), allDay: true),
+        ]
+        let sorted = AgendaOrder.sorted(events, startOfTomorrow: midnight, start: \.start, isAllDay: \.allDay)
+        #expect(sorted.map(\.title) == [
+            "Conference since Monday", "Leave today", "Call today", "Review today",
+            "Holiday tomorrow", "Trip tomorrow", "Standup tomorrow",
+        ])
+        // The card shows three rows: all of them must be today's.
+        #expect(sorted.prefix(3).allSatisfy { $0.start < midnight })
+    }
 }
 
 @Suite struct FormattingTests {

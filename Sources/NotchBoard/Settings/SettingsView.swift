@@ -70,7 +70,7 @@ struct SettingsView: View {
             Section("Permissions") {
                 permissionRow("Calendars", granted: model.agenda.eventAccess == .granted, anchor: "Privacy_Calendars")
                 permissionRow("Reminders", granted: model.agenda.reminderAccess == .granted, anchor: "Privacy_Reminders")
-                permissionRow("Control Music", granted: model.music.status != .notAuthorized, anchor: "Privacy_Automation")
+                permissionRow("Control Music", granted: model.music.automationLooksAllowed, anchor: "Privacy_Automation")
             }
 
             Section("General") {

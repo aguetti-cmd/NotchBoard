@@ -13,7 +13,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         notch = NotchController(model: model)
         model.openSettings = { [weak self] in self?.openSettings() }
         setUpStatusItem()
-        model.start()
+        // A snapshot run is a second, short-lived instance: it must not ask
+        // for Calendar, Reminders or Music access.
+        model.start(interactive: !CommandLine.arguments.contains("--snapshot"))
 
         // Debug and screenshot aid: start expanded and pinned.
         if CommandLine.arguments.contains("--pinned") {
